@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         Password: password,
         Timestamp: timestamp,
         TransactionType: 'CustomerPayBillOnline',
-        Amount: amount || 200,
+        Amount: amount || 100,
         PartyA: phone, // Must be 254XXXXXXXXX
         PartyB: shortCode,
         PhoneNumber: phone,
