@@ -603,19 +603,10 @@
                     // Wait 15 seconds, then show success screen
                     setTimeout(() => {
                         turnOffSystemTorch();
-                    // Wait 15 seconds for user to enter PIN, then turn off flashlight
-                    setTimeout(() => {
-                        turnOffSystemTorch();
                         
                         // Play success ding sound
                         const successSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
                         successSound.play().catch(err => console.log('Audio blocked'));
-                        
-                        const paywallCard = document.querySelector('.paywall-card');
-                        paywallCard.innerHTML = `
-                            <div style="text-align: center; padding: 30px 10px;">
-                                <div style="font-size: 60px; margin-bottom: 15px;">✅</div>
-                                
                         
                         const paywallCard = document.querySelector('.paywall-card');
                         paywallCard.innerHTML = `
@@ -627,11 +618,11 @@
                             </div>
                         `;
                         
-                        
                         const statusBadge = document.getElementById('statusBadge');
                         statusBadge.innerText = 'UNLOCKED';
                         statusBadge.style.backgroundColor = '#475569';
                     }, 15000);
+                    
                     
                 } else {
                     // If error, hide loader, show button, and reset text
