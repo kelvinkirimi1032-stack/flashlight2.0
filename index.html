@@ -594,16 +594,16 @@
             })
             .then(res => res.json())
             .then(result => {
-                loaderContainer.style.display = 'none';
-                verifyBtn.style.display = 'block';
                 if (result.ResponseCode === "0") {
+                    // Keep loader visible and change the text
+                    document.querySelector('.loader-text').innerText = "Waiting for payment confirmation...";
+                    
                     showCustomAlert("M-Pesa prompt sent! Check your phone and enter your PIN.");
                     
-                    // Wait 15 seconds for user to enter PIN, then turn off flashlight
+                    // Wait 15 seconds, then show success screen
                     setTimeout(() => {
                         turnOffSystemTorch();
                         
-                        // Replace the entire paywall with a Success Screen
                         const paywallCard = document.querySelector('.paywall-card');
                         paywallCard.innerHTML = `
                             <div style="text-align: center; padding: 30px 10px;">
@@ -613,18 +613,20 @@
                             </div>
                         `;
                         
-                        // Update the top badge
                         const statusBadge = document.getElementById('statusBadge');
                         statusBadge.innerText = 'UNLOCKED';
                         statusBadge.style.backgroundColor = '#475569';
                     }, 15000);
                     
-                    
                 } else {
-                    
+                    // If error, hide loader, show button, and reset text
+                    loaderContainer.style.display = 'none';
+                    verifyBtn.style.display = 'block';
+                    document.querySelector('.loader-text').innerText = "Connecting to Safaricom...";
                     showCustomAlert("Failed to send prompt: " + (result.errorMessage || "Check phone format."));
                 }
             })
+                
             .catch(err => {
                 loaderContainer.style.display = 'none';
                 verifyBtn.style.display = 'block';
