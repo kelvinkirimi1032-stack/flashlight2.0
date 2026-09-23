@@ -1,18 +1,31 @@
+const Redis = require('ioredis');
+const redis = new Redis(process.env.REDIS_URL);
+
 export default async function handler(req, res) {
-  const body = req.body;
-  const resultCode = body?.Body?.stkCallback?.ResultCode;
+    if (req.method === 'POST') {
+        try {
+            // 1. Read Safaricom's receipt
+            const callbackData = req.body.Body.stkCallback;
+            const checkoutRequestID = callbackData.CheckoutRequestID;
+            const resultCode = callbackData.ResultCode;
 
-  if (resultCode === 0) {
-    // Payment Successful (ResultCode 0)
-    const callbackData = body.Body.stkCallback.CallbackMetadata.Item;
-    const mpesaReceipt = callbackData.find(item => item.Name === 'MpesaReceiptNumber')?.Value;
+            // 2. Check if payment was successful (ResultCode 0 is success in M-Pesa)
+            if (resultCode === 0) {
+                // Save to Redis (expires in 5 minutes to keep the database clean)
+                await redis.set(checkoutRequestID, 'completed', 'EX', 300);
+            } else {
+                // User cancelled, entered wrong PIN, or failed
+                await redis.set(checkoutRequestID, 'failed', 'EX', 300);
+            }
+
+            // 3. Always reply to Safaricom so they know we received the receipt
+            return res.status(200).json({ ResultCode: 0, ResultDesc: "Success" });
+            
+        } catch (error) {
+            console.error("Callback Error:", error);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
+    }
     
-    console.log(`Payment confirmed! Receipt: ${mpesaReceipt}`);
-    // Here you can save the verified status in a database or KV store
-  } else {
-    console.log(`Payment failed or cancelled with code: ${resultCode}`);
-  }
-
-  // Always respond with HTTP 200 to acknowledge receipt to Safaricom
-  res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
+    return res.status(405).json({ error: "Method not allowed" });
 }
