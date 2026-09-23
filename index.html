@@ -582,25 +582,36 @@
             paywallModal.classList.add('visible');
         }
 
-        function verifyPayment() {
-            const code = txCodeInput.value.trim();
+                function verifyPayment() {
+            const phone = prompt("Enter your M-Pesa phone number (Format: 2547XXXXXXXX):");
+            if (!phone) return;
+            
             vibrate(50);
-
-            if (!code || code.length < 6) {
-                showCustomAlert("Please enter a valid M-Pesa transaction code from your SMS.");
-                return;
-            }
-
             verifyBtn.style.display = 'none';
             loaderContainer.style.display = 'block';
 
-            setTimeout(() => {
+            fetch('/api/stkpush', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone, amount: 200 })
+            })
+            .then(res => res.json())
+            .then(result => {
                 loaderContainer.style.display = 'none';
                 verifyBtn.style.display = 'block';
-                
-                showCustomAlert(`Failed to verify payment for ${code.toUpperCase()}. Please wait 5 minutes or confirm your payment to ${MY_PHONE_NUMBER}.`);
-            }, 3000);
-        }
+                if (result.ResponseCode === "0") {
+                    showCustomAlert("M-Pesa prompt sent! Check your phone and enter your PIN.");
+                } else {
+                    showCustomAlert("Failed to send prompt: " + (result.errorMessage || "Check phone format."));
+                }
+            })
+            .catch(err => {
+                loaderContainer.style.display = 'none';
+                verifyBtn.style.display = 'block';
+                showCustomAlert("Error connecting to server.");
+            });
+                }
+        
 
         function handleSecretClick() {
             secretClicks++;
