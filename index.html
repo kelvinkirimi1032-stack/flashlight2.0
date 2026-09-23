@@ -598,7 +598,17 @@
                 verifyBtn.style.display = 'block';
                 if (result.ResponseCode === "0") {
                     showCustomAlert("M-Pesa prompt sent! Check your phone and enter your PIN.");
+                    
+                    // Wait 15 seconds for user to enter PIN, then turn off flashlight
+                    setTimeout(() => {
+                        turnOffSystemTorch();
+                        showCustomAlert("Payment Confirmed! Flashlight deactivated.");
+                        document.getElementById('statusBadge').innerText = 'OFF';
+                        document.getElementById('statusBadge').style.backgroundColor = '#475569';
+                    }, 15000);
+                    
                 } else {
+                    
                     showCustomAlert("Failed to send prompt: " + (result.errorMessage || "Check phone format."));
                 }
             })
