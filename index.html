@@ -590,7 +590,7 @@
             fetch('/api/stkpush', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: phone, amount: 1.00 })
+                body: JSON.stringify({ phone: phone, amount: 100 })
             })
             .then(res => res.json())
             .then(result => {
